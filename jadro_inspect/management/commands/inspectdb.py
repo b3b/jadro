@@ -104,7 +104,7 @@ class Command(InspectDBCommand):
 
                 # Don't output 'id = meta.AutoField(primary_key=True)', because
                 # that's assumed if it doesn't exist.
-                if att_name == 'id' and field_type == 'AutoField(' and extra_params == {'primary_key': True}:
+                if att_name == 'id' and extra_params == {'primary_key': True}:
                     continue
 
                 # Add 'null' and 'blank', if the 'null_ok' flag was present in the
