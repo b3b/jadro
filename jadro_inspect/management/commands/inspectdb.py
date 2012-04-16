@@ -110,9 +110,10 @@ class Command(InspectDBCommand):
                 # Add 'null' and 'blank', if the 'null_ok' flag was present in the
                 # table description.
                 if row[6]: # If it's NULL...
-                    extra_params['blank'] = True
-                    if not field_type in ('TextField(', 'CharField('):
-                        extra_params['null'] = True
+                    if not 'primary_key' in extra_params: # do not set 'blank' for pk
+                        extra_params['blank'] = True
+                        if not field_type in ('TextField(', 'CharField('):
+                            extra_params['null'] = True
 
                 field_desc = '%s = models.%s' % (att_name, field_type)
                 if extra_params:
