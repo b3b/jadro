@@ -11,6 +11,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(TOP_DIR, 'default.db'),
         },
+    'contacts': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '/data/data/com.android.providers.contacts/databases/contacts2.db',
+        },
     }
 from jadro_inspect import DROID_DATABASES
 DATABASES.update(DROID_DATABASES)
@@ -67,6 +71,8 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.databrowse',
+    'django.contrib.admin',
+    'jadro_contacts',
 ) + DROID_INSTALLED_APPS
 
-DATABASE_ROUTERS = [ 'jadro_inspect.Router', ]
+DATABASE_ROUTERS = [ 'jadro_inspect.Router', 'jadro_contacts.Router' ]
