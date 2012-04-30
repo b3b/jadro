@@ -116,7 +116,7 @@ class GroupMembership(Data):
 class TimestampField(models.DateTimeField):
      __metaclass__ = models.SubfieldBase
      def to_python(self, value):
-         return value and datetime.datetime.utcfromtimestamp(value / 1000) or None
+         return value and datetime.datetime.fromtimestamp(value / 1000) or None
      def get_prep_value(self, value):
          return super(TimestampField, self).to_python(value)
      def get_db_prep_value(self, value, connection, prepared=False):
