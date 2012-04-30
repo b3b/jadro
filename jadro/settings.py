@@ -59,6 +59,10 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'jadro.urls'
 WSGI_APPLICATION = 'jadro.wsgi.application'
 
+STATIC_ROOT = ''
+STATIC_URL = '/static/'
+STATICFILES_DIRS = ()
+
 TEMPLATE_DIRS = (
     os.path.join(SETTINGS_DIR, 'templates'),
 )
@@ -70,6 +74,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
+    'django.contrib.staticfiles',
     'django.contrib.databrowse',
     'django.contrib.admin',
     'jadro_contacts',
