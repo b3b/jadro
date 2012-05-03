@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>API form</title>
+<meta http-equiv='content-type' content='text/html; charset=utf-8' />
+<script language='javascript' type='text/javascript' src='{{STATIC_URL}}admin/js/jquery.js'></script>
+<script language='javascript' type='text/javascript'>
+
+function find_parameters(parameters_button) {
+    return $(parameters_button).parent().parent().find('.{{form.parameter_js_class}}')
+}
+
+function decorate() {
+    $('.comma').remove();
+    $('.{{form.parameter_js_class}}').slice(2).before($("<span class='comma'> , </span>").clone());
+    $('.del_parameter').each(function() {
+        if (find_parameters(this).length > 1) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+$(document).ready(function() {
+    decorate();
+    $('.add_parameter').click(function() {
+        var parameters = find_parameters(this);
+        var last_parameter = parameters.last();
+        var new_parameter_name = '{{form.parameter_js_class}}' + parameters.length;
+        var new_parameter = last_parameter.clone();
+        new_parameter.attr('type', 'input');
+        new_parameter.attr('id', new_parameter_name);
+        new_parameter.attr('name', new_parameter_name);
+        new_parameter.val('');
+        $(last_parameter).after(new_parameter);
+        decorate();
+        return false;
+    });
+    $('.del_parameter').click(function() {
+        var parameters = find_parameters(this);
+        if (parameters.length > 1) {
+            parameters.last().remove();
+        }
+        decorate();
+        return false;
+    });
+});
+
+</script>
+</head>
+<body>
+<div>
+<form id='method_form' action='' method='post'>
+{% csrf_token %}
+{% for field in form %}
+{% if forloop.first %}{{ field.label }}: {{ field }}(
+{% else %}{{ field }}{% endif %}
+{% endfor %}
+<button class='del_parameter'>-</button>
+<button class='add_parameter'>+</button>
+)
+<input type='submit' name='_submit' value='Call method'/></input>
+</form>
+</div>
+<div>
+{% if result %}
+<ul>
+<li>Id: {{ result.id }}</li>
+<li>Result:<textarea>{{ result.result }}</textarea></li>
+<li>Error: {{ result.error }}</li>
+</ul>
+{% endif %}
+</div>
+</body>
+</html>

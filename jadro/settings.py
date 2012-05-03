@@ -78,6 +78,15 @@ INSTALLED_APPS = (
     'django.contrib.databrowse',
     'django.contrib.admin',
     'jadro_contacts',
+    'jadro_droid',
 ) + DROID_INSTALLED_APPS
 
 DATABASE_ROUTERS = [ 'jadro_inspect.Router', 'jadro_contacts.Router' ]
+
+try:
+    import android
+except ImportError:
+    from jadro_droid import DummyDroid
+    DROID_CONNECTION = DummyDroid()
+else:
+    DROID_CONNECTION = android.Android()
