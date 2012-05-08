@@ -64,27 +64,27 @@ class RawContactAdmin(ContactAdmin):
     display_phone.short_description = 'phone'
 
     def send_sms(modeladmin, request, queryset):
-        if request.POST.get('post'):
-            message_template = SendSmsForm(request.POST).data['message']
-            for contact in queryset:
-                message = Template(message_template).render(Context({'contact': contact}))
-                phone = contact.phones and "%s" % (contact.phones[0])
-                if phone:
-                    result = droid.smsSend(phone, message)
-                    if not result.error:
-                        messages.info(request, 'SMS message sended to %(contact)s (%(phone)s).' % {
-                                'contact': contact, 'phone': phone})
-                    else:
-                        messages.error(request, 'Error sending SMS message to %(contact)s (%(phone)s).' % {
-                                'contact': contact, 'phone': phone})
+        if not request.POST.get('post'):
+            return TemplateResponse(request, 'jadro_contacts/send_sms.html', {
+                    'contacts': queryset, 'form': SendSmsForm(initial={
+                            'action': 'send_sms',
+                            '_selected_action': request.POST.getlist('_selected_action')})})
+        message_template = SendSmsForm(request.POST).data['message']
+        def _send_sms(contact):
+            message = Template(message_template).render(Context({'contact': contact}))
+            phone = contact.phones and "%s" % (contact.phones[0])
+            if phone:
+                result = droid.smsSend(phone, message)
+                if not result.error:
+                    messages.info(request, 'SMS message sended to %(contact)s (%(phone)s).' % {
+                            'contact': contact, 'phone': phone})
                 else:
-                    messages.error(request, 'Error sending SMS message to %(contact)s: no phone.' % {
-                            'contact': contact})
-            return None
-        return TemplateResponse(request, 'jadro_contacts/send_sms.html', {
-                'contacts': queryset, 'form': SendSmsForm(initial={
-                        'action': 'send_sms',
-                        '_selected_action': request.POST.getlist('_selected_action')})})
+                    messages.error(request, 'Error sending SMS message to %(contact)s (%(phone)s).' % {
+                            'contact': contact, 'phone': phone})
+            else:
+                messages.error(request, 'Error sending SMS message to %(contact)s: no phone.' % {
+                        'contact': contact})
+        map(_send_sms, queryset)
 
     def get_actions(self, request):
         actions = super(RawContactAdmin, self).get_actions(request)
