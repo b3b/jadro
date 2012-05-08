@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h2>Send</h2>
+<form action='' method='post'>
+    {% csrf_token %}
+    {{ form }}
+    <h2>To</h2>
+    <ul>{{ contacts|unordered_list }}</ul>
+    <input type='submit' value='Send'/></input>
+</form>
+{% endblock %}
