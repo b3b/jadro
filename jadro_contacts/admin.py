@@ -50,7 +50,7 @@ class RawContactAdmin(ContactAdmin):
     ordering = ['-last_time_contacted']
     search_fields = ['display_name']
     inlines = [ PhoneInline, PhotoInline, GroupMembershipInline ]
-    actions = ['send_sms']
+    actions = ['call_phone', 'send_sms']
 
     def display_photo(self, obj):
         photos = obj.photos
@@ -62,6 +62,48 @@ class RawContactAdmin(ContactAdmin):
         phones = obj.phones
         return phones and phones[0] or ''
     display_phone.short_description = 'phone'
+
+    def call_phone(modeladmin, request, queryset):
+        if droid.startTrackingPhoneState().error:
+            messages.error(request, 'Error tracking phone state')
+            return
+        def _call_phone(contact):
+            def _error(msg):
+                messages.error(request, 'Error calling %(contact)s: %(msg)s.' % {
+                        'contact': contact, 'msg': msg})
+            def _wait_for_state(phone_state, wait_count=None):
+                state = ''
+                while (state != phone_state) and ((wait_count) or (wait_count is None)):
+                    r = droid.readPhoneState()
+                    if r.error or not r.result.get('state', None):
+                        break
+                    state = r.result['state']
+                    if state != phone_state:
+                        r = droid.eventWaitFor('phone', 5 * 1000)
+                        if r.error:
+                            break
+                    if wait_count:
+                        wait_count -= 1
+                return state
+            phone = contact.phones and "%s" % (contact.phones[0])
+            if not phone:
+                _error('no phone')
+                return
+            if _wait_for_state('idle') != 'idle':
+                _error('error getting phone state')
+                return
+            r = droid.phoneCallNumber(phone)
+            if not r.error:
+                messages.info(request, 'Called %(contact)s (%(phone)s).' % {
+                        'contact': contact, 'phone': phone})
+            else:
+                messages.error(request, 'Error calling %(contact)s (%(phone)s).' % {
+                        'contact': contact, 'phone': phone})
+            _wait_for_state('offhook', 1)
+            _wait_for_state('idle')
+        map(_call_phone, queryset)
+        if droid.stopTrackingPhoneState().error:
+            messages.error(request, 'Error stopping tracking phone state')
 
     def send_sms(modeladmin, request, queryset):
         if not request.POST.get('post'):
