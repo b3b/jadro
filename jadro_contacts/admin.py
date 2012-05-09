@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.admin.util import flatten_fieldsets
+from django.contrib.admin.util import flatten_fieldsets, unquote
 from django.contrib import messages
 from django.template import Context, Template
 from django.template.response import TemplateResponse
@@ -20,14 +20,25 @@ class ReadOnlyAdmin(admin.ModelAdmin):
         return list(fields)
 
 class ContactAdmin(ReadOnlyAdmin):
-    pass
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        request.method = 'GET'
+        return super(ContactAdmin, self).change_view(request, object_id, form_url, extra_context)
 
 class DataInline(admin.StackedInline):
+    can_delete = False
+    max_num = 0
     extra = 0
 
 class PhoneInline(DataInline):
     model = Phone
-    readonly_fields = ('data_number', 'data_type', 'data_label')
+    fields = ('data_number', 'phone_type')
+    readonly_fields = fields
 
 class PhotoInline(DataInline):
     model = Photo
@@ -51,6 +62,20 @@ class RawContactAdmin(ContactAdmin):
     search_fields = ['display_name']
     inlines = [ PhoneInline, PhotoInline, GroupMembershipInline ]
     actions = ['call_phone', 'send_sms']
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        method = request.method
+        request.method = 'GET'
+        obj = self.get_object(request, unquote(object_id))
+        if method == 'POST' and obj:
+            if '_call' in request.POST:
+                self.call_phone(request, (obj,))
+            elif '_sms' in request.POST:
+                return self.send_sms(request, (obj,))
+            elif request.POST.get('action', None) == 'send_sms':
+                request.method = 'POST'
+                self.send_sms(request, (obj,))
+        return super(RawContactAdmin, self).change_view(request, object_id, form_url, extra_context)
 
     def display_photo(self, obj):
         photos = obj.photos

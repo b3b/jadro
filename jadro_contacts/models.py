@@ -23,7 +23,7 @@ class Group(models.Model):
     
     def __unicode__(self):
         return u"%s" % (self.title)
-        
+
 class Call(models.Model):
     class Meta:
         db_table = u'calls'
@@ -79,12 +79,15 @@ class Phone(Data):
                    'fax-work', 'fax-home', 'pager', 'other')
     class Meta:
         db_table = u'data'
-        managed = False        
+        managed = False
     data_number = models.TextField('number', db_column='data1')
-    data_type = models.CharField('type', db_column='data2', max_length=255,
-                                 choices=enumerate(phone_types))
+    data_type = models.IntegerField('type', db_column='data2', choices=enumerate(phone_types))
     data_label = models.TextField('custom type', db_column='data3')
     raw_contact = models.ForeignKey('RawContact', related_name='contact_phones')
+
+    @property
+    def phone_type(self):
+        return int(self.data_type) and (self.phone_types[int(self.data_type)]) or self.data_label
 
     def __unicode__(self):
         return u"%s" % self.data_number
@@ -107,7 +110,7 @@ class GroupMembership(Data):
     class Meta:
         db_table = u'data'
         managed = False
-    data_group = models.ForeignKey('Group', db_column='data1')
+    data_group = models.ForeignKey('Group', verbose_name='group', db_column='data1')
     raw_contact = models.ForeignKey('RawContact')
 
     def __unicode__(self):
@@ -123,7 +126,7 @@ class TimestampField(models.DateTimeField):
         if not prepared:
             value = self.get_prep_value(value)
         return time.mktime(value.timetuple()) * 1000
-    
+
 class RawContact(models.Model):
     class Meta:
         db_table = u'raw_contacts'
