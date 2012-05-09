@@ -24,20 +24,29 @@ class Group(models.Model):
     def __unicode__(self):
         return u"%s" % (self.title)
 
+class TimestampField(models.DateTimeField):
+     __metaclass__ = models.SubfieldBase
+     def to_python(self, value):
+         return value and datetime.datetime.fromtimestamp(value / 1000) or None
+     def get_prep_value(self, value):
+         return super(TimestampField, self).to_python(value)
+     def get_db_prep_value(self, value, connection, prepared=False):
+        if not prepared:
+            value = self.get_prep_value(value)
+        return time.mktime(value.timetuple()) * 1000
+
 class Call(models.Model):
+    call_types_choices = ((1, 'incoming'), (2, 'outgoing'), (3, 'missed'))
     class Meta:
         db_table = u'calls'
+        ordering = ['-date']
     _id = models.IntegerField(primary_key=True)
     number = models.TextField(blank=True)
-    date = models.IntegerField(null=True, blank=True)
-    duration = models.IntegerField(null=True, blank=True)
-    type = models.IntegerField(null=True, blank=True)
-    new = models.IntegerField(null=True, blank=True)
     name = models.TextField(blank=True)
-    numbertype = models.IntegerField(null=True, blank=True)
-    numberlabel = models.TextField(blank=True)
-    modified = models.IntegerField(null=True, blank=True)
-    modified_time = models.IntegerField(null=True, blank=True)
+    date = TimestampField(null=True, blank=True)
+    duration = models.IntegerField(null=True, blank=True)
+    data_type = models.IntegerField('type', null=True, blank=True, db_column='type', choices=call_types_choices)
+    acknowledged = models.NullBooleanField(null=True, blank=True, db_column='new')
 
 class Contact(models.Model):
     class Meta:
@@ -115,17 +124,6 @@ class GroupMembership(Data):
 
     def __unicode__(self):
         return u"%s" % (self.data_group)
-
-class TimestampField(models.DateTimeField):
-     __metaclass__ = models.SubfieldBase
-     def to_python(self, value):
-         return value and datetime.datetime.fromtimestamp(value / 1000) or None
-     def get_prep_value(self, value):
-         return super(TimestampField, self).to_python(value)
-     def get_db_prep_value(self, value, connection, prepared=False):
-        if not prepared:
-            value = self.get_prep_value(value)
-        return time.mktime(value.timetuple()) * 1000
 
 class RawContact(models.Model):
     class Meta:

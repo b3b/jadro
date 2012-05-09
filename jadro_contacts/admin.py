@@ -6,7 +6,7 @@ from django.template.response import TemplateResponse
 from django import forms
 from django.forms.models import fields_for_model
 from django.conf import settings
-from models import RawContact, Phone, Photo, GroupMembership
+from models import RawContact, Phone, Photo, GroupMembership, Call
 
 droid = settings.DROID_CONNECTION
 
@@ -157,4 +157,12 @@ class RawContactAdmin(ContactAdmin):
         actions = super(RawContactAdmin, self).get_actions(request)
         return dict([(k,v) for k,v in actions.items() if k in self.actions])
 
+class CallAdmin(ContactAdmin):
+    fields = ['number', 'name', 'date', 'duration', 'data_type', 'acknowledged']
+    list_display = fields
+    search_fields = ['number', 'name']
+    list_filter = ['data_type', 'acknowledged','date']
+    actions = None
+
 admin.site.register(RawContact, RawContactAdmin)
+admin.site.register(Call, CallAdmin)
