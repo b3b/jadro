@@ -29,10 +29,13 @@ _run.py_ (from the Jadro directory) is a Django manage.py wrapper. To run manage
 
 ## Additional manage.py commands
 * find_databases
-Find and output a paths to SQLite databases
+
+    Find and output a paths to SQLite databases
 
 * inspectdb --database_path=DATABASE\_PATH
-Introspects _DATABASE\_PATH_ SQLite database
+
+    Introspects _DATABASE\_PATH_ SQLite database
 
 * startapp --database_path=DATABASE_PATH
-Create app for _DATABASE\_PATH_ SQLite database
+
+    Create app for _DATABASE\_PATH_ SQLite database
