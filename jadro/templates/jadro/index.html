@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>API form</title>
+</title>
+<body>
+<ul>
+{% for url in urls %}
+<li><h2><a href={{url.href}}>{{url.name}}</a></h2></li>
+{% endfor %}
+</ul>
+</body>
+</html>
