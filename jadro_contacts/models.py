@@ -3,17 +3,18 @@ import time
 import datetime
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.query import QuerySet
 from django.utils.safestring import mark_safe
 
 class Mimetype(models.Model):
     class Meta:
-        db_table = u'mimetypes'        
+        db_table = u'mimetypes'
     _id = models.IntegerField(primary_key=True)
     mimetype = models.TextField(unique=True)
 
 class Group(models.Model):
     class Meta:
-        db_table = u'groups'        
+        db_table = u'groups'
     _id = models.IntegerField(primary_key=True)
     title = models.TextField(blank=True)
     title_res = models.IntegerField(null=True, blank=True)
@@ -65,16 +66,27 @@ class Contact(models.Model):
     lookup = models.TextField(blank=True)
     status_update_id = models.IntegerField(null=True, blank=True)
     single_is_restricted = models.IntegerField()
-           
+
 class DataManager(models.Manager):
     def __init__(self, mimetype=None, *args, **kwargs):
         self._mimetype = mimetype
         return super(DataManager,self).__init__(*args, **kwargs)
     def get_query_set(self):
-        qs = super(DataManager,self).get_query_set()
+        QS = getattr(self, '_queryset_class', QuerySet)
+        qs = QS(self.model, using=self._db)
         if self._mimetype:
             qs = qs.filter(mimetype__mimetype=self._mimetype)
         return qs
+
+class PhoneQuerySet(QuerySet):
+    def filter_type(self, phone_types=[]):
+        def name_index(tname):
+            return self.model.phone_types.index(tname)
+        phone_types = map(name_index, phone_types)
+        return self.filter(data_type__in=phone_types)
+
+class PhoneManager(DataManager):
+    _queryset_class = PhoneQuerySet
 
 class Data(models.Model):
     class Meta:
@@ -83,7 +95,7 @@ class Data(models.Model):
     mimetype = models.ForeignKey('Mimetype', editable=False)
 
 class Phone(Data):
-    objects = DataManager('vnd.android.cursor.item/phone_v2')
+    objects = PhoneManager('vnd.android.cursor.item/phone_v2')
     phone_types = ('custom', 'home', 'mobile', 'work',
                    'fax-work', 'fax-home', 'pager', 'other')
     class Meta:
