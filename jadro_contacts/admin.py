@@ -139,7 +139,8 @@ class RawContactAdmin(ContactAdmin):
         message_template = SendSmsForm(request.POST).data['message']
         def _send_sms(contact):
             message = Template(message_template).render(Context({'contact': contact}))
-            phone = contact.phones and "%s" % (contact.phones[0])
+            phones = contact.phones.filter_type(['mobile'])
+            phone = phones and "%s" % phones[0]
             if phone:
                 result = droid.smsSend(phone, message)
                 if not result.error:
@@ -149,7 +150,7 @@ class RawContactAdmin(ContactAdmin):
                     messages.error(request, 'Error sending SMS message to %(contact)s (%(phone)s).' % {
                             'contact': contact, 'phone': phone})
             else:
-                messages.error(request, 'Error sending SMS message to %(contact)s: no phone.' % {
+                messages.error(request, 'Error sending SMS message to %(contact)s: no mobile phone.' % {
                         'contact': contact})
         map(_send_sms, queryset)
 
